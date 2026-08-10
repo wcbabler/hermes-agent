@@ -244,10 +244,12 @@ class TestFormatFooter:
         out = AIAgent._format_file_mutation_failure_footer(
             {"/tmp/a.md": {"tool": "patch", "error_preview": "Could not find old_string"}},
         )
-        assert "1 file(s) were NOT modified" in out
+        assert "1 file did **not** save this turn" in out
+        assert "What this means" in out
         assert "/tmp/a.md" in out
         assert "Could not find old_string" in out
         assert "git status" in out  # user-actionable hint
+        assert "File-mutation verifier" in out  # stable label for TTS strip
 
     def test_truncation_at_10_entries(self):
         failed = {
@@ -255,9 +257,9 @@ class TestFormatFooter:
             for i in range(15)
         }
         out = AIAgent._format_file_mutation_failure_footer(failed)
-        assert "15 file(s) were NOT modified" in out
+        assert "15 files did **not** save this turn" in out
         assert "… and 5 more" in out
-        # Ten file bullets + header + "and X more" line
+        # Ten file bullets + "and X more" line
         lines = out.split("\n")
         bullet_lines = [ln for ln in lines if ln.lstrip().startswith("•")]
         assert len(bullet_lines) == 11  # 10 shown + 1 summary

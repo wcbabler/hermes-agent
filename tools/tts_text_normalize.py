@@ -217,12 +217,13 @@ _THINK_BLOCK_RE = re.compile(r"<think[\s>].*?</think>", flags=re.DOTALL | re.IGN
 _THINK_BLOCK_OPEN_RE = re.compile(r"<think[\s>].*\Z", flags=re.DOTALL | re.IGNORECASE)
 
 # Turn-end file-mutation verifier footer appended by run_agent.py
-# (``_format_file_mutation_failure_footer``).  It's a UI affordance — reading
-# "warning file mutation verifier, 2 files were NOT modified..." aloud is
-# noise (#40772).  The footer is a ``⚠️ File-mutation verifier:`` header line
-# followed by indented ``•`` bullet lines; strip the whole block.
+# (``_format_file_mutation_failure_footer``).  UI affordance only — do not
+# speak it (#40772).  Starts with ``⚠️ File-mutation verifier:`` then plain
+# explanation lines and indented ``•`` bullets through end-of-block / next
+# blank-terminated section.  Match from the header through following
+# non-empty indented/bullet/blank continuation lines.
 _VERIFIER_FOOTER_RE = re.compile(
-    r"^\s*⚠️?\s*File-mutation verifier:.*(?:\n[ \t]+•.*)*",
+    r"^\s*⚠️?\s*File-mutation verifier:.*(?:\n[ \t]*•.*|\n[ \t]+\S.*|\n\*\*[^\n]*\*\*[^\n]*|\n)*",
     flags=re.MULTILINE,
 )
 

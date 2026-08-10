@@ -3497,11 +3497,20 @@ class AIAgent:
         """
         if not failed:
             return ""
+        n = len(failed)
+        noun = "file" if n == 1 else "files"
+        check_label = "this file" if n == 1 else "these files"
         lines = [
-            "⚠️ File-mutation verifier: "
-            f"{len(failed)} file(s) were NOT modified this turn despite any "
-            "wording above that may suggest otherwise. Run `git status` or "
-            "`read_file` to confirm."
+            # Keep the "File-mutation verifier:" label — TTS strips this block
+            # by that header, and docs/users already recognize it.
+            f"⚠️ File-mutation verifier: {n} {noun} did **not** save this turn.",
+            "",
+            "**What this means:** a `write_file` or `patch` call failed (or "
+            "was blocked), and nothing later in this turn successfully wrote "
+            "the same path. If the message above says those edits are done, "
+            "treat that claim as untrusted until you check.",
+            "",
+            f"**Check {check_label}:**",
         ]
         shown = 0
         for path, info in failed.items():
@@ -3510,13 +3519,23 @@ class AIAgent:
             preview = (info.get("error_preview") or "").strip()
             tool = info.get("tool") or "patch"
             if preview:
-                lines.append(f"  • `{path}` — [{tool}] {preview}")
+                lines.append(f"  • `{path}` — via `{tool}`: {preview}")
             else:
-                lines.append(f"  • `{path}` — [{tool}] failed")
+                lines.append(f"  • `{path}` — via `{tool}`: write did not land")
             shown += 1
         remaining = len(failed) - shown
         if remaining > 0:
             lines.append(f"  • … and {remaining} more")
+        lines.extend(
+            [
+                "",
+                "**What to do:** open the path(s), or run `git status` / "
+                "`git diff`. Only re-ask for the listed files if they are "
+                "still wrong. Ignore this if disk already matches what you want "
+                "(sometimes a failed tool was followed by a successful edit "
+                "another way).",
+            ]
+        )
         # Neutralize any path the preview text echoed (the bullet path is
         # already backticked above; the lookbehind keeps it from being
         # double-wrapped).
